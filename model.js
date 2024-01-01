@@ -17,10 +17,12 @@ const schema = new mongoose.Schema({
         type: String 
     },
     email : {
-        type : String
+        type : String,
+        required : [true, "Please enter the email address..."]
     },
     password : {
-        type : String
+        type : String,
+        required : [true, "Please enter the password"]
     },
     review : {
         type : String

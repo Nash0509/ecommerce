@@ -270,6 +270,13 @@ app.post('/register', async (req, res) => {
 
          const result = await models.electronics.create(user)
 
+         console.log(result);
+
+         if(!result) {
+          console.log("An error from the register : ", result);
+          return res.status(400).send({message : "Email already in use..."});
+         }
+
          const token = jwt.sign(user, jwtSecret, {expiresIn : '1h'});
 
          return res.status(200).json({token});
