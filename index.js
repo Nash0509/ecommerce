@@ -8,7 +8,6 @@ const bodyParser = require('body-parser');
 const joi = require('joi');
 require('dotenv').config();
 
-const port = process.env.PORT || 3000
 const jwtSecret = 'secret';
 
 app.use(cors());
@@ -35,7 +34,7 @@ const joiSchema = joi.object({
 })
 
 
-mongoose.connect('mongodb+srv://nishantsinghworkshard:ecommerce@cluster0.19t0pio.mongodb.net/?retryWrites=true&w=majority')
+mongoose.connect(process.env.string)
   .then(() => {
     console.log("The app is connected to the database...");
   })
@@ -402,6 +401,6 @@ app.get('/reviews/:id', async (req, res) => {
 
 })
 
-app.listen(3000 , () => {
+app.listen(process.env.PORT , () => {
   console.log("The server is running at the port 3000");
 });
