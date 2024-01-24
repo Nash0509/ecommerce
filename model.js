@@ -18,11 +18,9 @@ const schema = new mongoose.Schema({
     },
     email : {
         type : String,
-        required : [true, "Please enter the email address..."]
     },
     password : {
         type : String,
-        required : [true, "Please enter the password"]
     },
     review : {
         type : String

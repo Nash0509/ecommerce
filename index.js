@@ -38,6 +38,9 @@ const joiSchema = joi.object({
 mongoose.connect('mongodb+srv://nishantsinghworkshard:ecommerce@cluster0.19t0pio.mongodb.net/?retryWrites=true&w=majority')
   .then(() => {
     console.log("The app is connected to the database...");
+  })
+  .catch((err) => {
+    console.log("Error: " + err.message);
   });
 
 app.get('/electronics', async (req, res) => {
@@ -221,7 +224,7 @@ app.post('/pdt/:id/:price', async (req, res) =>{
     }
     catch (err) {
 
-     console.log("An error occured : "+ err.message);
+     console.log("An error occured : ", err);
      return res.status(500).send({message : err.message});
 
     }
@@ -399,6 +402,6 @@ app.get('/reviews/:id', async (req, res) => {
 
 })
 
-app.listen(port , () => {
+app.listen(3000 , () => {
   console.log("The server is running at the port 3000");
 });
