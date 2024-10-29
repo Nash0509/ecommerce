@@ -30,7 +30,6 @@ const joiSchema = joi.object({
 
     email : joi.string().email(),
     password : joi.string()
-
 })
 
 
@@ -260,6 +259,9 @@ app.post('/register', async (req, res) => {
       const user = {
         email : req.body.email,
         password : req.body.password,
+        phone: req.body.phone,
+        DOB: req.body.DOB,
+        residence: req.body.residence
       }
 
       const validate = joiSchema.validate(user);
@@ -401,6 +403,6 @@ app.get('/reviews/:id', async (req, res) => {
 
 })
 
-app.listen(process.env.PORT , () => {
+app.listen(8000 , () => {
   console.log("The server is running at the port 3000");
 });
