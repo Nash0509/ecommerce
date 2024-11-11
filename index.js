@@ -1,25 +1,25 @@
-const express = require('express');
-const mongoose = require('mongoose');
+const express = require("express");
+const mongoose = require("mongoose");
 const app = express();
-const models = require('./model');
-const jwt = require('jsonwebtoken');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const joi = require('joi');
-require('dotenv').config();
+const models = require("./model");
+const jwt = require("jsonwebtoken");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const joi = require("joi");
+require("dotenv").config();
 
-const jwtSecret = 'secret';
+const jwtSecret = "secret";
 
 app.use(cors());
 app.use(bodyParser.json());
 
 function authenticateToken(req, res, next) {
-  const token = req.header('auth');
+  const token = req.header("auth");
 
-  if (!token) return res.status(401).send('Access denied.');
+  if (!token) return res.status(401).send("Access denied.");
 
   jwt.verify(token, jwtSecret, (err, user) => {
-    if (err) return res.status(403).send('Invalid token.');
+    if (err) return res.status(403).send("Invalid token.");
 
     req.user = user;
     next();
@@ -27,13 +27,19 @@ function authenticateToken(req, res, next) {
 }
 
 const joiSchema = joi.object({
+  email: joi.string().email().required(),
+  password: joi.string().min(8).required(),
+  phone: joi
+    .string()
+    .pattern(/^\d{10}$/)
+    .required(),
+  DOB: joi.date().iso().required(),
+  residence: joi.string().min(3).required(),
+  userName: joi.string()
+});
 
-    email : joi.string().email(),
-    password : joi.string()
-})
-
-
-mongoose.connect(process.env.string)
+mongoose
+  .connect(process.env.string)
   .then(() => {
     console.log("The app is connected to the database...");
   })
@@ -41,10 +47,9 @@ mongoose.connect(process.env.string)
     console.log("Error: " + err.message);
   });
 
-app.get('/electronics', async (req, res) => {
+app.get("/electronics", async (req, res) => {
   try {
-  
-   const result = await models.electronics.find({type : "elect"});
+    const result = await models.electronics.find({ type: "elect" });
 
     if (!result || result.length === 0) {
       console.log("Not found!");
@@ -58,11 +63,10 @@ app.get('/electronics', async (req, res) => {
     return res.status(500).send({ message: e.message });
   }
 });
-app.get('/clothing', async (req, res) => {
+app.get("/clothing", async (req, res) => {
   try {
-  
-   const result = await models.electronics.find({type : "cloth"});
-   
+    const result = await models.electronics.find({ type: "cloth" });
+
     if (!result || result.length === 0) {
       console.log("Not found!");
       return res.status(404).send({ message: "Not found!" });
@@ -75,11 +79,10 @@ app.get('/clothing', async (req, res) => {
     return res.status(500).send({ message: e.message });
   }
 });
-app.get('/luxury', async (req, res) => {
+app.get("/luxury", async (req, res) => {
   try {
-  
-   const result = await models.electronics.find({type : "lux"});
-   
+    const result = await models.electronics.find({ type: "lux" });
+
     if (!result || result.length === 0) {
       console.log("Not found!");
       return res.status(404).send({ message: "Not found!" });
@@ -92,11 +95,10 @@ app.get('/luxury', async (req, res) => {
     return res.status(500).send({ message: e.message });
   }
 });
-app.get('/sports', async (req, res) => {
+app.get("/sports", async (req, res) => {
   try {
-  
-   const result = await models.electronics.find({type : "sport"});
-   
+    const result = await models.electronics.find({ type: "sport" });
+
     if (!result || result.length === 0) {
       console.log("Not found!");
       return res.status(404).send({ message: "Not found!" });
@@ -109,11 +111,10 @@ app.get('/sports', async (req, res) => {
     return res.status(500).send({ message: e.message });
   }
 });
-app.get('/travel', async (req, res) => {
+app.get("/travel", async (req, res) => {
   try {
-  
-   const result = await models.electronics.find({type : "travel"});
-   
+    const result = await models.electronics.find({ type: "travel" });
+
     if (!result || result.length === 0) {
       console.log("Not found!");
       return res.status(404).send({ message: "Not found!" });
@@ -126,11 +127,10 @@ app.get('/travel', async (req, res) => {
     return res.status(500).send({ message: e.message });
   }
 });
-app.get('/grocery', async (req, res) => {
+app.get("/grocery", async (req, res) => {
   try {
-  
-   const result = await models.electronics.find({type : "grocery"});
-   
+    const result = await models.electronics.find({ type: "grocery" });
+
     if (!result || result.length === 0) {
       console.log("Not found!");
       return res.status(404).send({ message: "Not found!" });
@@ -143,11 +143,10 @@ app.get('/grocery', async (req, res) => {
     return res.status(500).send({ message: e.message });
   }
 });
-app.get('/twowheelers', async (req, res) => {
+app.get("/twowheelers", async (req, res) => {
   try {
-  
-   const result = await models.electronics.find({type : "two"});
-   
+    const result = await models.electronics.find({ type: "two" });
+
     if (!result || result.length === 0) {
       console.log("Not found!");
       return res.status(404).send({ message: "Not found!" });
@@ -160,11 +159,10 @@ app.get('/twowheelers', async (req, res) => {
     return res.status(500).send({ message: e.message });
   }
 });
-app.get('/home', async (req, res) => {
+app.get("/home", async (req, res) => {
   try {
-  
-   const result = await models.electronics.find({type : "home"});
-   
+    const result = await models.electronics.find({ type: "home" });
+
     if (!result || result.length === 0) {
       console.log("Not found!");
       return res.status(404).send({ message: "Not found!" });
@@ -178,231 +176,203 @@ app.get('/home', async (req, res) => {
   }
 });
 
-app.get('/product/:id',async (req, res) => {
+app.get("/product/:id", async (req, res) => {
+  try {
+    const id = req.params.id;
 
-     try {
+    const result = await models.electronics.findById(id);
 
-      const id = req.params.id;
-
-     const result = await models.electronics.findById(id);
-
-     if(!result) {
+    if (!result) {
       console.log("404 not found");
-      return res.status(404).send({message : "Not found!"});
-     }
+      return res.status(404).send({ message: "Not found!" });
+    }
 
-     return res.status(200).json(result);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log("An error occured  : " + err.message);
+    return res.status(500).send({ message: err.message });
+  }
+});
 
-     }
-     catch (err) {
-
-      console.log("An error occured  : "+ err.message);
-      return res.status(500).send({message : err.message});
-
-     }
-
-})
-
-app.post('/pdt/:id/:price', async (req, res) =>{
-
+app.post("/pdt/:id/:price", async (req, res) => {
   console.log(req.params.id);
 
-    try {
+  try {
+    const result = await models.electronics.create({
+      id: req.params.id,
+      name: "cart",
+      price: req.params.price,
+    });
 
-     const result = await models.electronics.create({
-      id : req.params.id,
-      name : "cart",
-      price : req.params.price
-     })
+    console.log("The item added successfully to the cart !", result);
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log("An error occured : ", err);
+    return res.status(500).send({ message: err.message });
+  }
+});
 
+app.get("/cart", async (req, res) => {
+  try {
+    const result = await models.electronics.find({
+      name: "cart",
+    });
 
-     console.log("The item added successfully to the cart !", result);
-     return res.status(200).json(result);
-
-    }
-    catch (err) {
-
-     console.log("An error occured : ", err);
-     return res.status(500).send({message : err.message});
-
-    }
-
-})
-
-app.get('/cart', async (req, res) => {
-
-    try {
-
-     const result = await models.electronics.find({
-      name: "cart"
-     });
-
-     if(!result) {
-      console.log("404 not found!")
-      return res.status(404).send({message : "404 not found!"})
-     }
-
-     return res.status(200).json(result);
-
-    }
-    catch (err) {
-      console.log("An error occured during the fetching the cart items from the database!")
-      return res.status(500).send({message : err.message});
-    }
-
-})
-
-app.post('/register', async (req, res) => {
-
-     try {
-
-      const user = {
-        email : req.body.email,
-        password : req.body.password,
-        phone: req.body.phone,
-        DOB: req.body.DOB,
-        residence: req.body.residence
-      }
-
-      const validate = joiSchema.validate(user);
-      if(validate.error) {
-        console.log(validate.error.details);
-        return res.status(422).json({message : validate.error.details});
-      }
-
-      console.log(user);
-
-         const result = await models.electronics.create(user)
-
-         console.log(result);
-
-         if(!result) {
-          console.log("An error from the register : ", result);
-          return res.status(400).send({message : "Email already in use..."});
-         }
-
-         const token = jwt.sign(user, jwtSecret, {expiresIn : '1h'});
-
-         return res.status(200).json({token});
-
-     }
-     catch (err) {
-      console.log("Error in the register! : " + err.message);
-      return res.status(500).send({message : err.message});
-     } 
-
-})
-
-app.post('/login', async (req, res) => {
-
-    try {
-
-      const user = {
-        email : req.body.email,
-        password : req.body.password
-      }
-
-      const validate = joiSchema.validate(user);
-      if(validate.error) {
-        console.log(validate.error.details);
-        return res.status(422).json({message : validate.error.details});
-      }
-
-     const result = await models.electronics.findOne(user)
-
-     if(!result) {
+    if (!result) {
       console.log("404 not found!");
-      return res.status(404).send({message : "404 not found!"});
-     }
-
-     const token = jwt.sign(user, jwtSecret, {expiresIn : '1h'});
-     return res.status(200).json({token});
-
-    }
-    catch (err) {
-      console.log("An error in the login! : " + err.message);
-      return res.status(500).send({message : err.message});
+      return res.status(404).send({ message: "404 not found!" });
     }
 
-})
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log(
+      "An error occured during the fetching the cart items from the database!"
+    );
+    return res.status(500).send({ message: err.message });
+  }
+});
 
-app.get('/checkout', authenticateToken, (req, res) => {
+app.post("/register", async (req, res) => {
+  try {
+    const user = {
+      email: req.body.email,
+      password: req.body.password,
+      phone: req.body.phone,
+      DOB: req.body.DOB,
+      residence: req.body.residence,
+      userName: req.body.userName
+    };
 
-   return res.status(200).json({message : true});
+    let checkEmail = await models.electronics.find({ email: user.email });
 
-})
-
-app.delete('/delete/:id', async (req, res) => {
-
-    try {
-
-      const result = await models.electronics.deleteOne({
-        _id : req.params.id
-      })
-
-      return res.status(200).json({message : result});
-
-    }
-    catch (err) {
-     console.log("An error occured in the delete");
-     return res.status(500).json({message: err.message});
-    }
-
-})
-
-app.post('/review/:id', async (req, res) => {
-
-    try {
-
-      console.log(req.body);
-
-        const result = await models.electronics.create({
-          review : req.body.review,
-          id : req.params.id,
-          name : 'review',
-          rating : req.body.rating
-        });
-
-        return res.status(200).json(result);
-
-    }
-    catch (err) {
-
-      console.log("An error occured in the posting review...");
-      return res.status(500).json({message : err.message});
-
+    if (checkEmail.length > 0) {
+      console.log(checkEmail);
+      return res.status(409).json({ message: "The email already exists..." });
     }
 
-})
+    const validate = joiSchema.validate(user);
+    if (validate.error) {
+      console.log(validate.error.details[0].message);
+      return res
+        .status(422)
+        .json({ message: validate.error.details[0].message });
+    }
 
-app.get('/reviews/:id', async (req, res) => {
+    console.log(user);
 
-      try {
+    const result = await models.electronics.create(user);
 
-       const result = await models.electronics.find({
-          
-           name : 'review',
-           id : req.params.id,
+    console.log(result);
 
-       })
+    if (!result) {
+      console.log("An error from the register : ", result);
+      return res.status(400).send({ message: "Email already in use..." });
+    }
 
-       if(!result) {
-        console.log("Not found 404");
-        return res.status(404).json({message : "Not found while fetching the reviews"});
-       }
+    const token = jwt.sign(user, jwtSecret, { expiresIn: "1h" });
 
-       return res.status(200).json(result);
+    return res.status(200).json({ token });
+  } catch (err) {
+    console.log("Error in the register! : " + err.message);
+    return res.status(500).send({ message: err.message });
+  }
+});
 
-      }
-      catch (err) {
+app.post("/login", async (req, res) => {
+  try {
+    const user = {
+      email: req.body.email,
+      password: req.body.password,
+    };
 
-      console.log("An error occured while getting reviews...");
-      return res.status(500).json({message : err.message});
+    console.log(user);
+    const result = await models.electronics.findOne(user);
+    if (!result) {
+      console.log("404 not found!");
+      return res.status(404).send({ message: "404 not found!" });
+    }
 
-      }
+    const token = jwt.sign(user, jwtSecret, { expiresIn: "1h" });
+    console.log(result);
 
-})
+    return res.status(200).json({ token, result });
+  } catch (err) {
+    console.log("An error in the login! : " + err.message);
+    return res.status(500).send({ message: err.message });
+  }
+});
 
-app.listen(8000 , () => {
+app.get("/checkout", authenticateToken, (req, res) => {
+  return res.status(200).json({ message: true });
+});
+
+app.delete("/delete/:id", async (req, res) => {
+  try {
+    const result = await models.electronics.deleteOne({
+      _id: req.params.id,
+    });
+
+    return res.status(200).json({ message: result });
+  } catch (err) {
+    console.log("An error occured in the delete");
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+app.post("/review/:id", async (req, res) => {
+  try {
+    console.log(req.body);
+
+    const result = await models.electronics.create({
+      review: req.body.review,
+      id: req.params.id,
+      name: "review",
+      rating: req.body.rating,
+    });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log("An error occured in the posting review...");
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+app.get("/reviews/:id", async (req, res) => {
+  try {
+    const result = await models.electronics.find({
+      name: "review",
+      id: req.params.id,
+    });
+
+    if (!result) {
+      console.log("Not found 404");
+      return res
+        .status(404)
+        .json({ message: "Not found while fetching the reviews" });
+    }
+
+    return res.status(200).json(result);
+  } catch (err) {
+    console.log("An error occured while getting reviews...");
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+app.get("/profile/:id", async (req, res) => {
+  try {
+    const result = await models.electronics.find({ _id: req.params.id });
+    if (!result) {
+      console.log("Profile not found...");
+      return res
+        .status(404)
+        .json({ message: "No such profile exists with that email..." });
+    }
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+app.listen(8000, () => {
   console.log("The server is running at the port 3000");
 });
