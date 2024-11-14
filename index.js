@@ -35,7 +35,7 @@ const joiSchema = joi.object({
     .required(),
   DOB: joi.date().iso().required(),
   residence: joi.string().min(3).required(),
-  userName: joi.string()
+  userName: joi.string(),
 });
 
 mongoose
@@ -195,27 +195,33 @@ app.get("/product/:id", async (req, res) => {
 });
 
 app.post("/pdt/:id/:price", async (req, res) => {
-  console.log(req.params.id);
-
+  console.log(req.body);
   try {
     const result = await models.electronics.create({
       id: req.params.id,
       name: "cart",
       price: req.params.price,
+      uid: req.body.uid,
     });
 
-    console.log("The item added successfully to the cart !", result);
-    return res.status(200).json(result);
+    if (!result) {
+      return res.status(404).json({
+        message: "An error occured while adding the item to the cart...",
+        success: false,
+      });
+    }
+
+    return res.status(200).json({ success: true, result });
   } catch (err) {
     console.log("An error occured : ", err);
     return res.status(500).send({ message: err.message });
   }
 });
 
-app.get("/cart", async (req, res) => {
+app.get("/cart/:uid", async (req, res) => {
   try {
     const result = await models.electronics.find({
-      name: "cart",
+      uid: req.params.uid,
     });
 
     if (!result) {
@@ -240,7 +246,7 @@ app.post("/register", async (req, res) => {
       phone: req.body.phone,
       DOB: req.body.DOB,
       residence: req.body.residence,
-      userName: req.body.userName
+      userName: req.body.userName,
     };
 
     let checkEmail = await models.electronics.find({ email: user.email });
@@ -306,18 +312,22 @@ app.get("/checkout", authenticateToken, (req, res) => {
   return res.status(200).json({ message: true });
 });
 
-app.delete("/delete/:id", async (req, res) => {
+app.delete("/deleteItem/:id", async (req, res) => {
+  console.log("Entering the delete route...");
   try {
-    const result = await models.electronics.deleteOne({
-      _id: req.params.id,
-    });
+    const result = await models.electronics.deleteOne({ _id: req.params.id });
 
-    return res.status(200).json({ message: result });
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ success: false, message: "Item not found." });
+    }
+
+    return res.status(200).json({ success: true, message: "Item deleted successfully." });
   } catch (err) {
-    console.log("An error occured in the delete");
-    return res.status(500).json({ message: err.message });
+    console.log("An error occurred during deletion:", err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 });
+
 
 app.post("/review/:id", async (req, res) => {
   try {
@@ -368,6 +378,30 @@ app.get("/profile/:id", async (req, res) => {
         .json({ message: "No such profile exists with that email..." });
     }
     return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+app.post("/addToCart/:uid", async (req, res) => {
+  try {
+    const { uid } = req.params; // Extracting uid from params
+    const { cartItem } = req.body; // Accessing cart item from the request body
+
+    const result = await models.electronics.updateOne(
+      { _id: uid },
+      {
+        $push: { cart: cartItem },
+      }
+    );
+
+    if (!result.matchedCount) {
+      return res
+        .status(404)
+        .json({ message: "No document with this id found...", success: false });
+    }
+
+    return res.status(200).json({ success: true, result });
   } catch (err) {
     return res.status(500).json({ message: "Internal server error..." });
   }

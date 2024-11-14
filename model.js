@@ -39,6 +39,9 @@ const schema = new mongoose.Schema({
   },
   userName : {
     type : String
+  }, 
+  uid : {
+    type : String
   }
 });
 
