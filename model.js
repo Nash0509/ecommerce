@@ -42,6 +42,18 @@ const schema = new mongoose.Schema({
   }, 
   uid : {
     type : String
+  },
+  watchCount: {
+    type : Number
+  },
+  image : {
+    type : String
+  },
+  type : {
+    type : String
+  },
+  categories : {
+    type : Array
   }
 });
 
