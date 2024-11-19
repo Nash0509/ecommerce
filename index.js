@@ -49,7 +49,8 @@ mongoose
 
 app.get("/electronics", async (req, res) => {
   try {
-    const result = await models.electronics.find({ type: "elect" });
+    const typesArray = ["elect", "Electronics"];
+    const result = await models.electronics.find({ type: { $in: typesArray } });
 
     if (!result || result.length === 0) {
       return res.status(404).send({ message: "Not found!" });
@@ -62,7 +63,8 @@ app.get("/electronics", async (req, res) => {
 });
 app.get("/clothing", async (req, res) => {
   try {
-    const result = await models.electronics.find({ type: "cloth" });
+    const types = ["cloth", "Clothing"];
+    const result = await models.electronics.find({ type: { $in: types } });
 
     if (!result || result.length === 0) {
       return res.status(404).send({ message: "Not found!" });
@@ -74,7 +76,8 @@ app.get("/clothing", async (req, res) => {
 });
 app.get("/luxury", async (req, res) => {
   try {
-    const result = await models.electronics.find({ type: "lux" });
+    const types = ["lux", "Luxury"];
+    const result = await models.electronics.find({ type: { $in: types } });
 
     if (!result || result.length === 0) {
       return res.status(404).send({ message: "Not found!" });
@@ -87,7 +90,8 @@ app.get("/luxury", async (req, res) => {
 });
 app.get("/sports", async (req, res) => {
   try {
-    const result = await models.electronics.find({ type: "sport" });
+    const types = ["sport", "sports"];
+    const result = await models.electronics.find({ type: { $in: types } });
 
     if (!result || result.length === 0) {
       return res.status(404).send({ message: "Not found!" });
@@ -256,7 +260,6 @@ app.post("/login", async (req, res) => {
     }
 
     const token = jwt.sign(user, jwtSecret, { expiresIn: "1h" });
-
     return res.status(200).json({ token, result });
   } catch (err) {
     return res.status(500).send({ message: err.message });
@@ -403,7 +406,7 @@ app.post("/addPdt", async (req, res) => {
       name: req.body.name,
       dis: req.body.dis,
       rating: 0,
-      price: req.body.price,
+      Price: req.body.price,
       image: req.body.image,
       type: req.body.type,
       watchCount: 0,
@@ -417,6 +420,50 @@ app.post("/addPdt", async (req, res) => {
         .json({ success: false, message: "No document found..." });
     }
 
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+app.delete("/deletePdt/:id", async (req, res) => {
+  try {
+    console.log("Came here");
+
+    const result = await models.electronics.deleteOne({ _id: req.params.id });
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+app.patch("/patchPdt/:id", async (req, res) => {
+  try {
+    console.log(req.body);
+    const result = await models.electronics.updateOne({
+        _id : req.params.id
+    }, {
+      name : req.body.product.name,
+      dis : req.body.product.dis,
+      Price :req.body.product.Price,
+      image : req.body.product.image
+    });
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+    console.log(result);
     return res.status(200).json({ result, success: true });
   } catch (err) {
     return res.status(500).json({ message: "Internal server error..." });
@@ -438,6 +485,26 @@ app.get("/categories", async (req, res) => {
     return res.status(200).json({ cate: result.cate, success: true });
   } catch (err) {
     console.log("Coming here...");
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+app.put("/addType", async (req, res) => {
+  try {
+    const result = await models.electronics.updateOne(
+      { _id: "673737c94facf9242d49e794" },
+      {
+        $push: { cate: req.body.categoryName },
+      }
+    );
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
     return res.status(500).json({ message: "Internal server error..." });
   }
 });
