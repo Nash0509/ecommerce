@@ -231,7 +231,6 @@ app.post("/register", async (req, res) => {
 
     const result = await models.electronics.create(user);
 
-
     if (!result) {
       return res.status(400).send({ message: "Email already in use..." });
     }
@@ -288,7 +287,6 @@ app.delete("/deleteItem/:id", async (req, res) => {
 
 app.post("/review/:id", async (req, res) => {
   try {
-
     const result = await models.electronics.create({
       review: req.body.review,
       id: req.params.id,
@@ -427,20 +425,19 @@ app.post("/addPdt", async (req, res) => {
 
 app.get("/categories", async (req, res) => {
   try {
+    console.log("Coming inside of the try...");
     const result = await models.electronics.findOne({
-      _id: ObjectId("673737c94facf9242d49e794"),
+      _id: "673737c94facf9242d49e794",
     });
-
+    console.log("Coming inside of the try...1");
     if (!result) {
       return res
         .status(404)
         .json({ success: false, message: "No document found..." });
     }
-    console.log("______________________________________________");
-    console.log(result);
-
-    return res.status(200).json({ result, success: true });
+    return res.status(200).json({ cate: result.cate, success: true });
   } catch (err) {
+    console.log("Coming here...");
     return res.status(500).json({ message: "Internal server error..." });
   }
 });

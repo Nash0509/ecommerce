@@ -54,6 +54,12 @@ const schema = new mongoose.Schema({
   },
   categories : {
     type : Array
+  },
+  cate : {
+    type: Array
+  }, 
+  isAdmin : {
+    type : Boolean
   }
 });
 
