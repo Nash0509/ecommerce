@@ -7,6 +7,11 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const joi = require("joi");
 require("dotenv").config();
+const stripe = require("stripe")(
+  "sk_test_51QN7PwFddwuYFaDh5huZSurPXsvs4SY9glJrbKLigHQ6gYClipt2sO3PiGBtKX7KlN0pLaeIHx1zqaGroE3lodp100OoqAEYCq"
+);
+
+const domain = "http://localhost:5173";
 
 const jwtSecret = "secret";
 
@@ -449,14 +454,17 @@ app.delete("/deletePdt/:id", async (req, res) => {
 app.patch("/patchPdt/:id", async (req, res) => {
   try {
     console.log(req.body);
-    const result = await models.electronics.updateOne({
-        _id : req.params.id
-    }, {
-      name : req.body.product.name,
-      dis : req.body.product.dis,
-      Price :req.body.product.Price,
-      image : req.body.product.image
-    });
+    const result = await models.electronics.updateOne(
+      {
+        _id: req.params.id,
+      },
+      {
+        name: req.body.product.name,
+        dis: req.body.product.dis,
+        Price: req.body.product.Price,
+        image: req.body.product.image,
+      }
+    );
 
     if (!result) {
       return res
@@ -505,6 +513,76 @@ app.put("/addType", async (req, res) => {
     }
     return res.status(200).json({ result, success: true });
   } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+app.patch("/editProfile/:id", async (req, res) => {
+  try {
+    const result = await models.electronics.updateOne(
+      { _id: req.params.id },
+      {
+        phone: req.body.phone,
+        residence: req.body.address,
+        userName: req.body.name,
+        DOB: req.body.DOB,
+      }
+    );
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+app.post("/create-checkout-session", async (req, res) => {
+  const session = await stripe.checkout.sessions.create({
+    line_items: [
+      {
+        price: "price_1QN88FFddwuYFaDhgaC7lF2t",
+        quantity: 1,
+      },
+    ],
+    mode: "payment",
+    success_url: `${domain}/success`,
+    cancel_url: `${domain}/cancel`,
+  });
+
+  return res.status(200).json({ url: session.url, success: true });
+});
+
+app.patch("/updateUserPurchaseStatus/:id", async (req, res) => {
+  try {
+    console.log(req.body);
+    const pdts = req.body.map((pdt) => {
+      return {
+        id: pdt.id,
+        status: "Order Placed",
+        date: new Date(),
+        price: pdt.price,
+      };
+    });
+
+    const result = await models.electronics.updateOne(
+      { _id: req.params.id },
+      {
+        $push: { cart:  { $each: pdts } },
+      }
+    );
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    console.log(err);
     return res.status(500).json({ message: "Internal server error..." });
   }
 });
