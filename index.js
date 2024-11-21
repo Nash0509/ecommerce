@@ -181,7 +181,7 @@ app.post("/pdt/:id/:price", async (req, res) => {
     const result = await models.electronics.create({
       id: req.params.id,
       name: "cart",
-      price: req.params.price,
+      Price: req.params.price,
       uid: req.body.uid,
     });
 
@@ -541,13 +541,31 @@ app.patch("/editProfile/:id", async (req, res) => {
 });
 
 app.post("/create-checkout-session", async (req, res) => {
-  const session = await stripe.checkout.sessions.create({
-    line_items: [
-      {
-        price: "price_1QN88FFddwuYFaDhgaC7lF2t",
+  let checkOutItems = await Promise.all(
+    req.body.map(async (item) => {
+      const id = item.id;
+      const result = await models.electronics.findById(id);
+      if (!result) {
+        return res.status(404).send({ message: "Not found!" });
+      }
+
+      return {
+        price_data: {
+          currency: "inr",
+          unit_amount: result.Price * 100,
+          product_data: {
+            name: result.name,
+            description: result.dis,
+            images: [`${result.image}`],
+          },
+        },
         quantity: 1,
-      },
-    ],
+      };
+    })
+  );
+
+  const session = await stripe.checkout.sessions.create({
+    line_items: checkOutItems,
     mode: "payment",
     success_url: `${domain}/success`,
     cancel_url: `${domain}/cancel`,
@@ -571,7 +589,7 @@ app.patch("/updateUserPurchaseStatus/:id", async (req, res) => {
     const result = await models.electronics.updateOne(
       { _id: req.params.id },
       {
-        $push: { cart:  { $each: pdts } },
+        $push: { cart: { $each: pdts } },
       }
     );
 

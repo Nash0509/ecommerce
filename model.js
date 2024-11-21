@@ -7,7 +7,7 @@ const schema = new mongoose.Schema({
   dis: {
     type: String,
   },
-  price: {
+  Price: {
     type: Number,
   },
   rating: {
