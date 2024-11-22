@@ -214,6 +214,24 @@ app.get("/cart/:uid", async (req, res) => {
   }
 });
 
+app.get('/category/:name', async (req, res) => {
+    try {
+     const result = await models.electronics.find({
+         type : req.params.name
+     })
+
+     if (!result) {
+      return res.status(404).send({ message: "404 not found!" });
+    }
+
+    return res.status(200).json({success : true, result});
+    }
+    catch (err) {
+      return res.status(500).send({ message: err.message });
+    }
+
+})
+
 app.post("/register", async (req, res) => {
   try {
     const user = {
@@ -582,7 +600,7 @@ app.patch("/updateUserPurchaseStatus/:id", async (req, res) => {
         id: pdt.id,
         status: "Order Placed",
         date: new Date(),
-        price: pdt.price,
+        price: pdt.Price,
       };
     });
 
