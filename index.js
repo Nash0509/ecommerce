@@ -1,22 +1,23 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const app = express();
-const models = require("./model");
+const models = require("./Database/model");
 const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const joi = require("joi");
 require("dotenv").config();
-const stripe = require("stripe")(
-  "sk_test_51QN7PwFddwuYFaDh5huZSurPXsvs4SY9glJrbKLigHQ6gYClipt2sO3PiGBtKX7KlN0pLaeIHx1zqaGroE3lodp100OoqAEYCq"
-);
+const stripe = require("stripe")(process.env.stripe);
+const {makeConnection} = require('./Database/connect')
 
-const domain = "http://localhost:5173";
-
-const jwtSecret = "secret";
+const domain = process.env.FEDomain;
+const jwtSecret = process.env.secret;
 
 app.use(cors());
 app.use(bodyParser.json());
+
+// For making the connection with the MongoDB(dataBase)
+ makeConnection();
 
 function authenticateToken(req, res, next) {
   const token = req.header("auth");
@@ -42,15 +43,6 @@ const joiSchema = joi.object({
   residence: joi.string().min(3).required(),
   userName: joi.string(),
 });
-
-mongoose
-  .connect(process.env.string)
-  .then(() => {
-    console.log("The app is connected to the database...");
-  })
-  .catch((err) => {
-    console.log("Error: " + err.message);
-  });
 
 app.get("/electronics", async (req, res) => {
   try {
@@ -214,23 +206,21 @@ app.get("/cart/:uid", async (req, res) => {
   }
 });
 
-app.get('/category/:name', async (req, res) => {
-    try {
-     const result = await models.electronics.find({
-         type : req.params.name
-     })
+app.get("/category/:name", async (req, res) => {
+  try {
+    const result = await models.electronics.find({
+      type: req.params.name,
+    });
 
-     if (!result) {
+    if (!result) {
       return res.status(404).send({ message: "404 not found!" });
     }
 
-    return res.status(200).json({success : true, result});
-    }
-    catch (err) {
-      return res.status(500).send({ message: err.message });
-    }
-
-})
+    return res.status(200).json({ success: true, result });
+  } catch (err) {
+    return res.status(500).send({ message: err.message });
+  }
+});
 
 app.post("/register", async (req, res) => {
   try {
@@ -623,6 +613,6 @@ app.patch("/updateUserPurchaseStatus/:id", async (req, res) => {
   }
 });
 
-app.listen(8000, () => {
+app.listen(process.env.PORT, () => {
   console.log("The server is running at the port 3000");
 });
