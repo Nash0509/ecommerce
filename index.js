@@ -8,17 +8,43 @@ const bodyParser = require("body-parser");
 const joi = require("joi");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.stripe);
-const {makeConnection} = require('./Database/connect')
-
+const { makeConnection } = require("./Database/connect");
+const authRoutes = require('./Routes/auth.routes');
+const productRoutes = require('./Routes/products.routes');
+const homeRoute = require('./Routes/home.routes');
+const cartRoute = require('./Routes/cart.routes');
+const categoryRoute = require('./Routes/category.routes');
+const productOpsRoute = require('./Routes/pdtOps.routes');
 const domain = process.env.FEDomain;
 const jwtSecret = process.env.secret;
 
+// Cors and the json parser
 app.use(cors());
 app.use(bodyParser.json());
 
-// For making the connection with the MongoDB(dataBase)
- makeConnection();
+//authRoutes
+app.use('/api/v1/auth', authRoutes);
 
+//product routes
+app.use('/api/v1/product', productRoutes);
+
+//home route
+app.use('/api/v1/home', homeRoute);
+
+// Cart Routes
+app.use('/api/v1/cart', cartRoute);
+
+// Category Routes
+app.use('/api/v1/category', categoryRoute);
+
+// Product Routes
+app.use('/api/v1/products', productOpsRoute);
+
+
+// For making the connection with the MongoDB(dataBase)
+makeConnection();
+
+// Token
 function authenticateToken(req, res, next) {
   const token = req.header("auth");
 
@@ -32,6 +58,7 @@ function authenticateToken(req, res, next) {
   });
 }
 
+// Validation
 const joiSchema = joi.object({
   email: joi.string().email().required(),
   password: joi.string().min(8).required(),
@@ -44,6 +71,99 @@ const joiSchema = joi.object({
   userName: joi.string(),
 });
 
+// Auth/done
+app.post("/register", async (req, res) => {
+  try {
+    const user = {
+      email: req.body.email,
+      password: req.body.password,
+      phone: req.body.phone,
+      DOB: req.body.DOB,
+      residence: req.body.residence,
+      userName: req.body.userName,
+    };
+
+    let checkEmail = await models.electronics.find({ email: user.email });
+
+    if (checkEmail.length > 0) {
+      return res.status(409).json({ message: "The email already exists..." });
+    }
+
+    const validate = joiSchema.validate(user);
+    if (validate.error) {
+      return res
+        .status(422)
+        .json({ message: validate.error.details[0].message });
+    }
+
+    const result = await models.electronics.create(user);
+
+    if (!result) {
+      return res.status(400).send({ message: "Email already in use..." });
+    }
+
+    const token = jwt.sign(user, jwtSecret, { expiresIn: "1h" });
+
+    return res.status(200).json({ token });
+  } catch (err) {
+    return res.status(500).send({ message: err.message });
+  }
+});
+app.post("/login", async (req, res) => {
+  try {
+    const user = {
+      email: req.body.email,
+      password: req.body.password,
+    };
+
+    const result = await models.electronics.findOne(user);
+    if (!result) {
+      return res.status(404).send({ message: "404 not found!" });
+    }
+
+    const token = jwt.sign(user, jwtSecret, { expiresIn: "1h" });
+    return res.status(200).json({ token, result });
+  } catch (err) {
+    return res.status(500).send({ message: err.message });
+  }
+});
+app.get("/profile/:id", async (req, res) => {
+  try {
+    const result = await models.electronics.find({ _id: req.params.id });
+    if (!result) {
+      return res
+        .status(404)
+        .json({ message: "No such profile exists with that email..." });
+    }
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+app.patch("/editProfile/:id", async (req, res) => {
+  try {
+    const result = await models.electronics.updateOne(
+      { _id: req.params.id },
+      {
+        phone: req.body.phone,
+        residence: req.body.address,
+        userName: req.body.name,
+        DOB: req.body.DOB,
+      }
+    );
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+// Products/done
 app.get("/electronics", async (req, res) => {
   try {
     const typesArray = ["elect", "Electronics"];
@@ -138,20 +258,6 @@ app.get("/twowheelers", async (req, res) => {
     return res.status(500).send({ message: e.message });
   }
 });
-app.get("/home", async (req, res) => {
-  try {
-    const result = await models.electronics.find({ type: "home" });
-
-    if (!result || result.length === 0) {
-      return res.status(404).send({ message: "Not found!" });
-    }
-
-    res.json(result);
-  } catch (e) {
-    return res.status(500).send({ message: e.message });
-  }
-});
-
 app.get("/product/:id", async (req, res) => {
   try {
     const id = req.params.id;
@@ -167,7 +273,6 @@ app.get("/product/:id", async (req, res) => {
     return res.status(500).send({ message: err.message });
   }
 });
-
 app.post("/pdt/:id/:price", async (req, res) => {
   try {
     const result = await models.electronics.create({
@@ -190,6 +295,22 @@ app.post("/pdt/:id/:price", async (req, res) => {
   }
 });
 
+// Home/done
+app.get("/home", async (req, res) => {
+  try {
+    const result = await models.electronics.find({ type: "home" });
+
+    if (!result || result.length === 0) {
+      return res.status(404).send({ message: "Not found!" });
+    }
+
+    res.json(result);
+  } catch (e) {
+    return res.status(500).send({ message: e.message });
+  }
+});
+
+// Cart/done
 app.get("/cart/:uid", async (req, res) => {
   try {
     const result = await models.electronics.find({
@@ -205,150 +326,6 @@ app.get("/cart/:uid", async (req, res) => {
     return res.status(500).send({ message: err.message });
   }
 });
-
-app.get("/category/:name", async (req, res) => {
-  try {
-    const result = await models.electronics.find({
-      type: req.params.name,
-    });
-
-    if (!result) {
-      return res.status(404).send({ message: "404 not found!" });
-    }
-
-    return res.status(200).json({ success: true, result });
-  } catch (err) {
-    return res.status(500).send({ message: err.message });
-  }
-});
-
-app.post("/register", async (req, res) => {
-  try {
-    const user = {
-      email: req.body.email,
-      password: req.body.password,
-      phone: req.body.phone,
-      DOB: req.body.DOB,
-      residence: req.body.residence,
-      userName: req.body.userName,
-    };
-
-    let checkEmail = await models.electronics.find({ email: user.email });
-
-    if (checkEmail.length > 0) {
-      return res.status(409).json({ message: "The email already exists..." });
-    }
-
-    const validate = joiSchema.validate(user);
-    if (validate.error) {
-      return res
-        .status(422)
-        .json({ message: validate.error.details[0].message });
-    }
-
-    const result = await models.electronics.create(user);
-
-    if (!result) {
-      return res.status(400).send({ message: "Email already in use..." });
-    }
-
-    const token = jwt.sign(user, jwtSecret, { expiresIn: "1h" });
-
-    return res.status(200).json({ token });
-  } catch (err) {
-    return res.status(500).send({ message: err.message });
-  }
-});
-
-app.post("/login", async (req, res) => {
-  try {
-    const user = {
-      email: req.body.email,
-      password: req.body.password,
-    };
-
-    const result = await models.electronics.findOne(user);
-    if (!result) {
-      return res.status(404).send({ message: "404 not found!" });
-    }
-
-    const token = jwt.sign(user, jwtSecret, { expiresIn: "1h" });
-    return res.status(200).json({ token, result });
-  } catch (err) {
-    return res.status(500).send({ message: err.message });
-  }
-});
-
-app.get("/checkout", authenticateToken, (req, res) => {
-  return res.status(200).json({ message: true });
-});
-
-app.delete("/deleteItem/:id", async (req, res) => {
-  try {
-    const result = await models.electronics.deleteOne({ _id: req.params.id });
-
-    if (result.deletedCount === 0) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Item not found." });
-    }
-
-    return res
-      .status(200)
-      .json({ success: true, message: "Item deleted successfully." });
-  } catch (err) {
-    return res.status(500).json({ success: false, message: err.message });
-  }
-});
-
-app.post("/review/:id", async (req, res) => {
-  try {
-    const result = await models.electronics.create({
-      review: req.body.review,
-      id: req.params.id,
-      name: "review",
-      rating: req.body.rating,
-    });
-
-    return res.status(200).json(result);
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-});
-
-app.get("/reviews/:id", async (req, res) => {
-  try {
-    const result = await models.electronics.find({
-      name: "review",
-      id: req.params.id,
-    });
-
-    if (!result) {
-      return res
-        .status(404)
-        .json({ message: "Not found while fetching the reviews" });
-    }
-
-    return res.status(200).json(result);
-  } catch (err) {
-    return res.status(500).json({ message: err.message });
-  }
-});
-
-app.get("/profile/:id", async (req, res) => {
-  try {
-    const result = await models.electronics.find({ _id: req.params.id });
-    if (!result) {
-      return res
-        .status(404)
-        .json({ message: "No such profile exists with that email..." });
-    }
-    return res.status(200).json({ result, success: true });
-  } catch (err) {
-    return res.status(500).json({ message: "Internal server error..." });
-  }
-});
-
 app.post("/addToCart/:uid", async (req, res) => {
   try {
     const { uid } = req.params; // Extracting uid from params
@@ -373,119 +350,22 @@ app.post("/addToCart/:uid", async (req, res) => {
   }
 });
 
-app.post("/trendSetter/:pdtId", async (req, res) => {
+// Category/done
+app.get("/category/:name", async (req, res) => {
   try {
-    const result = await models.electronics.updateOne(
-      { _id: req.params.pdtId },
-      { $inc: { watchCount: 1 } } // Corrected $inc usage
-    );
+    const result = await models.electronics.find({
+      type: req.params.name,
+    });
 
-    if (result.matchedCount === 0) {
-      // Check if the product was found
-      return res
-        .status(404)
-        .json({ message: "Product not found", success: false });
+    if (!result) {
+      return res.status(404).send({ message: "404 not found!" });
     }
 
     return res.status(200).json({ success: true, result });
   } catch (err) {
-    return res.status(500).json({ message: "Internal server error..." });
+    return res.status(500).send({ message: err.message });
   }
 });
-
-app.get("/getTrends", async (req, res) => {
-  try {
-    const result = await models.electronics
-      .find({
-        watchCount: { $gt: 0 },
-      })
-      .sort({ watchCount: -1 });
-
-    if (!result) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No document found..." });
-    }
-
-    return res.status(200).json({ result, success: true });
-  } catch (err) {
-    return res.status(500).json({ message: "Internal server error..." });
-  }
-});
-
-app.post("/addPdt", async (req, res) => {
-  try {
-    const product = {
-      name: req.body.name,
-      dis: req.body.dis,
-      rating: 0,
-      Price: req.body.price,
-      image: req.body.image,
-      type: req.body.type,
-      watchCount: 0,
-    };
-
-    const result = await models.electronics.create(product);
-
-    if (!result) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No document found..." });
-    }
-
-    return res.status(200).json({ result, success: true });
-  } catch (err) {
-    return res.status(500).json({ message: "Internal server error..." });
-  }
-});
-
-app.delete("/deletePdt/:id", async (req, res) => {
-  try {
-    console.log("Came here");
-
-    const result = await models.electronics.deleteOne({ _id: req.params.id });
-
-    if (!result) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No document found..." });
-    }
-
-    return res.status(200).json({ result, success: true });
-  } catch (err) {
-    console.log(err);
-
-    return res.status(500).json({ message: "Internal server error..." });
-  }
-});
-
-app.patch("/patchPdt/:id", async (req, res) => {
-  try {
-    console.log(req.body);
-    const result = await models.electronics.updateOne(
-      {
-        _id: req.params.id,
-      },
-      {
-        name: req.body.product.name,
-        dis: req.body.product.dis,
-        Price: req.body.product.Price,
-        image: req.body.product.image,
-      }
-    );
-
-    if (!result) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No document found..." });
-    }
-    console.log(result);
-    return res.status(200).json({ result, success: true });
-  } catch (err) {
-    return res.status(500).json({ message: "Internal server error..." });
-  }
-});
-
 app.get("/categories", async (req, res) => {
   try {
     console.log("Coming inside of the try...");
@@ -505,49 +385,10 @@ app.get("/categories", async (req, res) => {
   }
 });
 
-app.put("/addType", async (req, res) => {
-  try {
-    const result = await models.electronics.updateOne(
-      { _id: "673737c94facf9242d49e794" },
-      {
-        $push: { cate: req.body.categoryName },
-      }
-    );
-
-    if (!result) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No document found..." });
-    }
-    return res.status(200).json({ result, success: true });
-  } catch (err) {
-    return res.status(500).json({ message: "Internal server error..." });
-  }
+// Checkout/done
+app.get("/checkout", authenticateToken, (req, res) => {
+  return res.status(200).json({ message: true });
 });
-
-app.patch("/editProfile/:id", async (req, res) => {
-  try {
-    const result = await models.electronics.updateOne(
-      { _id: req.params.id },
-      {
-        phone: req.body.phone,
-        residence: req.body.address,
-        userName: req.body.name,
-        DOB: req.body.DOB,
-      }
-    );
-
-    if (!result) {
-      return res
-        .status(404)
-        .json({ success: false, message: "No document found..." });
-    }
-    return res.status(200).json({ result, success: true });
-  } catch (err) {
-    return res.status(500).json({ message: "Internal server error..." });
-  }
-});
-
 app.post("/create-checkout-session", async (req, res) => {
   let checkOutItems = await Promise.all(
     req.body.map(async (item) => {
@@ -581,7 +422,6 @@ app.post("/create-checkout-session", async (req, res) => {
 
   return res.status(200).json({ url: session.url, success: true });
 });
-
 app.patch("/updateUserPurchaseStatus/:id", async (req, res) => {
   try {
     console.log(req.body);
@@ -613,6 +453,191 @@ app.patch("/updateUserPurchaseStatus/:id", async (req, res) => {
   }
 });
 
-app.listen(process.env.PORT, () => {
+// Pdt Operations
+app.delete("/deleteItem/:id", async (req, res) => {
+  try {
+    const result = await models.electronics.deleteOne({ _id: req.params.id });
+
+    if (result.deletedCount === 0) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found." });
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Item deleted successfully." });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: err.message });
+  }
+});
+app.post("/addPdt", async (req, res) => {
+  try {
+    const product = {
+      name: req.body.name,
+      dis: req.body.dis,
+      rating: 0,
+      Price: req.body.price,
+      image: req.body.image,
+      type: req.body.type,
+      watchCount: 0,
+    };
+
+    const result = await models.electronics.create(product);
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+app.delete("/deletePdt/:id", async (req, res) => {
+  try {
+    console.log("Came here");
+
+    const result = await models.electronics.deleteOne({ _id: req.params.id });
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+app.patch("/patchPdt/:id", async (req, res) => {
+  try {
+    console.log(req.body);
+    const result = await models.electronics.updateOne(
+      {
+        _id: req.params.id,
+      },
+      {
+        name: req.body.product.name,
+        dis: req.body.product.dis,
+        Price: req.body.product.Price,
+        image: req.body.product.image,
+      }
+    );
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+    console.log(result);
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+// Reviews
+app.post("/review/:id", async (req, res) => {
+  try {
+    const result = await models.electronics.create({
+      review: req.body.review,
+      id: req.params.id,
+      name: "review",
+      rating: req.body.rating,
+    });
+
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+app.get("/reviews/:id", async (req, res) => {
+  try {
+    const result = await models.electronics.find({
+      name: "review",
+      id: req.params.id,
+    });
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ message: "Not found while fetching the reviews" });
+    }
+
+    return res.status(200).json(result);
+  } catch (err) {
+    return res.status(500).json({ message: err.message });
+  }
+});
+
+// Trends
+app.post("/trendSetter/:pdtId", async (req, res) => {
+  try {
+    const result = await models.electronics.updateOne(
+      { _id: req.params.pdtId },
+      { $inc: { watchCount: 1 } } // Corrected $inc usage
+    );
+
+    if (result.matchedCount === 0) {
+      // Check if the product was found
+      return res
+        .status(404)
+        .json({ message: "Product not found", success: false });
+    }
+
+    return res.status(200).json({ success: true, result });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+app.get("/getTrends", async (req, res) => {
+  try {
+    const result = await models.electronics
+      .find({
+        watchCount: { $gt: 0 },
+      })
+      .sort({ watchCount: -1 });
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+// Type Op
+app.put("/addType", async (req, res) => {
+  try {
+    const result = await models.electronics.updateOne(
+      { _id: "673737c94facf9242d49e794" },
+      {
+        $push: { cate: req.body.categoryName },
+      }
+    );
+
+    if (!result) {
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
+    }
+    return res.status(200).json({ result, success: true });
+  } catch (err) {
+    return res.status(500).json({ message: "Internal server error..." });
+  }
+});
+
+// Start Backend
+app.listen(8000, () => {
   console.log("The server is running at the port 3000");
 });
