@@ -9,12 +9,15 @@ const joi = require("joi");
 require("dotenv").config();
 const stripe = require("stripe")(process.env.stripe);
 const { makeConnection } = require("./Database/connect");
-const authRoutes = require('./Routes/auth.routes');
-const productRoutes = require('./Routes/products.routes');
-const homeRoute = require('./Routes/home.routes');
-const cartRoute = require('./Routes/cart.routes');
-const categoryRoute = require('./Routes/category.routes');
-const productOpsRoute = require('./Routes/pdtOps.routes');
+const authRoutes = require("./Routes/auth.routes");
+const productRoutes = require("./Routes/products.routes");
+const homeRoute = require("./Routes/home.routes");
+const cartRoute = require("./Routes/cart.routes");
+const categoryRoute = require("./Routes/category.routes");
+const productOpsRoute = require("./Routes/pdtOps.routes");
+const reviewRoutes = require("./Routes/reviews.routes");
+const trendsRoutes = require("./Routes/trends.routes");
+const typeOps = require("./Routes/typeOps.routes");
 const domain = process.env.FEDomain;
 const jwtSecret = process.env.secret;
 
@@ -22,29 +25,42 @@ const jwtSecret = process.env.secret;
 app.use(cors());
 app.use(bodyParser.json());
 
-//authRoutes
-app.use('/api/v1/auth', authRoutes);
-
-//product routes
-app.use('/api/v1/product', productRoutes);
-
-//home route
-app.use('/api/v1/home', homeRoute);
-
-// Cart Routes
-app.use('/api/v1/cart', cartRoute);
-
-// Category Routes
-app.use('/api/v1/category', categoryRoute);
-
-// Product Routes
-app.use('/api/v1/products', productOpsRoute);
-
-
 // For making the connection with the MongoDB(dataBase)
 makeConnection();
 
-// Token
+// Start Backend
+app.listen(8000, () => {
+  console.log("The server is running at the port 8000");
+});
+
+//authRoutes
+app.use("/api/v1/auth", authRoutes);
+
+//product routes
+app.use("/api/v1/product", productRoutes);
+
+//home route
+app.use("/api/v1/home", homeRoute);
+
+// Cart Routes
+app.use("/api/v1/cart", cartRoute);
+
+// Category Routes
+app.use("/api/v1/category", categoryRoute);
+
+// Product Routes
+app.use("/api/v1/products", productOpsRoute);
+
+// Reviews Routes
+app.use("api/v1/reviews", reviewRoutes);
+
+// Trends Routes
+app.use("/api/v1/trends", trendsRoutes);
+
+// Types ops
+app.use("/api/v1/typeOps", typeOps);
+
+// Token/done
 function authenticateToken(req, res, next) {
   const token = req.header("auth");
 
@@ -453,7 +469,7 @@ app.patch("/updateUserPurchaseStatus/:id", async (req, res) => {
   }
 });
 
-// Pdt Operations
+// Pdt Operations/done
 app.delete("/deleteItem/:id", async (req, res) => {
   try {
     const result = await models.electronics.deleteOne({ _id: req.params.id });
@@ -542,7 +558,7 @@ app.patch("/patchPdt/:id", async (req, res) => {
   }
 });
 
-// Reviews
+// Reviews/done
 app.post("/review/:id", async (req, res) => {
   try {
     const result = await models.electronics.create({
@@ -576,7 +592,7 @@ app.get("/reviews/:id", async (req, res) => {
   }
 });
 
-// Trends
+// Trends/done
 app.post("/trendSetter/:pdtId", async (req, res) => {
   try {
     const result = await models.electronics.updateOne(
@@ -616,7 +632,7 @@ app.get("/getTrends", async (req, res) => {
   }
 });
 
-// Type Op
+// Type Op/done
 app.put("/addType", async (req, res) => {
   try {
     const result = await models.electronics.updateOne(
@@ -635,9 +651,4 @@ app.put("/addType", async (req, res) => {
   } catch (err) {
     return res.status(500).json({ message: "Internal server error..." });
   }
-});
-
-// Start Backend
-app.listen(8000, () => {
-  console.log("The server is running at the port 3000");
 });
