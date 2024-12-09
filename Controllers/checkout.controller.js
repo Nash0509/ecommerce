@@ -1,8 +1,10 @@
 // controllers/checkout.controller.js
 
 const models = require("../Database/model");
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY); // Add Stripe secret key
-const domain = process.env.DOMAIN_URL; // Define the domain URL
+const stripe = require("stripe")(
+  "sk_test_51QN7PwFddwuYFaDh5huZSurPXsvs4SY9glJrbKLigHQ6gYClipt2sO3PiGBtKX7KlN0pLaeIHx1zqaGroE3lodp100OoqAEYCq"
+);
+const domain = "http://localhost:5173";
 
 // Get checkout page (authentication required)
 const getCheckoutPage = (req, res) => {
@@ -68,7 +70,9 @@ const updateUserPurchaseStatus = async (req, res) => {
     );
 
     if (!result) {
-      return res.status(404).json({ success: false, message: "No document found..." });
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
     }
 
     return res.status(200).json({ result, success: true });
@@ -78,4 +82,8 @@ const updateUserPurchaseStatus = async (req, res) => {
   }
 };
 
-module.exports = { getCheckoutPage, createCheckoutSession, updateUserPurchaseStatus };
+module.exports = {
+  getCheckoutPage,
+  createCheckoutSession,
+  updateUserPurchaseStatus,
+};

@@ -6,7 +6,7 @@ const models = require("../Database/model");
 const getCategoryByName = async (req, res) => {
   try {
     const result = await models.electronics.find({
-      type: req.params.name,
+      type: req.params.name.toLowerCase(),
     });
 
     if (!result || result.length === 0) {

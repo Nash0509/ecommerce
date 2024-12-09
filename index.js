@@ -18,6 +18,7 @@ const productOpsRoute = require("./Routes/pdtOps.routes");
 const reviewRoutes = require("./Routes/reviews.routes");
 const trendsRoutes = require("./Routes/trends.routes");
 const typeOps = require("./Routes/typeOps.routes");
+const checkoutRoutes = require('./Routes/checkout.routes');
 const domain = process.env.FEDomain;
 const jwtSecret = process.env.secret;
 
@@ -52,13 +53,16 @@ app.use("/api/v1/category", categoryRoute);
 app.use("/api/v1/products", productOpsRoute);
 
 // Reviews Routes
-app.use("api/v1/reviews", reviewRoutes);
+app.use("/api/v1/reviews", reviewRoutes);
 
 // Trends Routes
 app.use("/api/v1/trends", trendsRoutes);
 
 // Types ops
 app.use("/api/v1/typeOps", typeOps);
+
+// Checkout/done
+app.use("/api/v1/checkout", checkoutRoutes);
 
 // Token/done
 function authenticateToken(req, res, next) {
@@ -384,11 +388,9 @@ app.get("/category/:name", async (req, res) => {
 });
 app.get("/categories", async (req, res) => {
   try {
-    console.log("Coming inside of the try...");
     const result = await models.electronics.findOne({
       _id: "673737c94facf9242d49e794",
     });
-    console.log("Coming inside of the try...1");
     if (!result) {
       return res
         .status(404)
@@ -396,7 +398,6 @@ app.get("/categories", async (req, res) => {
     }
     return res.status(200).json({ cate: result.cate, success: true });
   } catch (err) {
-    console.log("Coming here...");
     return res.status(500).json({ message: "Internal server error..." });
   }
 });
@@ -440,7 +441,6 @@ app.post("/create-checkout-session", async (req, res) => {
 });
 app.patch("/updateUserPurchaseStatus/:id", async (req, res) => {
   try {
-    console.log(req.body);
     const pdts = req.body.map((pdt) => {
       return {
         id: pdt.id,
@@ -464,7 +464,6 @@ app.patch("/updateUserPurchaseStatus/:id", async (req, res) => {
     }
     return res.status(200).json({ result, success: true });
   } catch (err) {
-    console.log(err);
     return res.status(500).json({ message: "Internal server error..." });
   }
 });
@@ -514,7 +513,6 @@ app.post("/addPdt", async (req, res) => {
 });
 app.delete("/deletePdt/:id", async (req, res) => {
   try {
-    console.log("Came here");
 
     const result = await models.electronics.deleteOne({ _id: req.params.id });
 
@@ -526,14 +524,11 @@ app.delete("/deletePdt/:id", async (req, res) => {
 
     return res.status(200).json({ result, success: true });
   } catch (err) {
-    console.log(err);
-
     return res.status(500).json({ message: "Internal server error..." });
   }
 });
 app.patch("/patchPdt/:id", async (req, res) => {
   try {
-    console.log(req.body);
     const result = await models.electronics.updateOne(
       {
         _id: req.params.id,
@@ -551,7 +546,6 @@ app.patch("/patchPdt/:id", async (req, res) => {
         .status(404)
         .json({ success: false, message: "No document found..." });
     }
-    console.log(result);
     return res.status(200).json({ result, success: true });
   } catch (err) {
     return res.status(500).json({ message: "Internal server error..." });
@@ -638,7 +632,7 @@ app.put("/addType", async (req, res) => {
     const result = await models.electronics.updateOne(
       { _id: "673737c94facf9242d49e794" },
       {
-        $push: { cate: req.body.categoryName },
+        $push: { cate: req.body.categoryName.toLowerCase() },
       }
     );
 

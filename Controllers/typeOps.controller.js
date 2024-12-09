@@ -5,7 +5,7 @@ const addType = async (req, res) => {
     const result = await models.electronics.updateOne(
       { _id: "673737c94facf9242d49e794" },
       {
-        $push: { cate: req.body.categoryName },
+        $push: { cate: req.body.categoryName.toLowerCase() },
       }
     );
 

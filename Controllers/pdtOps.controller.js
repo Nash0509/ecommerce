@@ -24,7 +24,7 @@ const addProduct = async (req, res) => {
       rating: 0,
       Price: req.body.price,
       image: req.body.image,
-      type: req.body.type,
+      type: req.body.type.toLowerCase(),
       watchCount: 0,
     };
 
