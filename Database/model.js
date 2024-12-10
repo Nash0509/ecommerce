@@ -34,33 +34,33 @@ const schema = new mongoose.Schema({
   residence: {
     type: String,
   },
-  cart : {
-    type : Array
+  cart: {
+    type: Array,
   },
-  userName : {
-    type : String
-  }, 
-  uid : {
-    type : String
+  userName: {
+    type: String,
+  },
+  uid: {
+    type: String,
   },
   watchCount: {
-    type : Number
+    type: Number,
   },
-  image : {
-    type : String
+  image: {
+    type: String,
   },
-  type : {
-    type : String
+  type: {
+    type: String,
   },
-  categories : {
-    type : Array
+  categories: {
+    type: Array,
   },
-  cate : {
-    type: Array
-  }, 
-  isAdmin : {
-    type : Boolean
-  }
+  cate: {
+    type: Array,
+  },
+  isAdmin: {
+    type: Boolean,
+  },
 });
 
 const electronics = mongoose.model("electronics", schema);

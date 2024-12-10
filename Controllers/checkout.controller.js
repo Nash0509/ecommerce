@@ -1,12 +1,9 @@
 // controllers/checkout.controller.js
 
 const models = require("../Database/model");
-const stripe = require("stripe")(
-  "sk_test_51QN7PwFddwuYFaDh5huZSurPXsvs4SY9glJrbKLigHQ6gYClipt2sO3PiGBtKX7KlN0pLaeIHx1zqaGroE3lodp100OoqAEYCq"
-);
-const domain = "http://localhost:5173";
-
-// Get checkout page (authentication required)
+require("dotenv").config();
+const stripe = require("stripe")(process.env.STRIPE_KEY);
+const domain = process.env.FEDomain;
 const getCheckoutPage = (req, res) => {
   return res.status(200).json({ message: true });
 };

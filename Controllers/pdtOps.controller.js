@@ -6,10 +6,14 @@ const deleteProduct = async (req, res) => {
     const result = await models.electronics.deleteOne({ _id: req.params.id });
 
     if (result.deletedCount === 0) {
-      return res.status(404).json({ success: false, message: "Item not found." });
+      return res
+        .status(404)
+        .json({ success: false, message: "Item not found." });
     }
 
-    return res.status(200).json({ success: true, message: "Item deleted successfully." });
+    return res
+      .status(200)
+      .json({ success: true, message: "Item deleted successfully." });
   } catch (err) {
     return res.status(500).json({ success: false, message: err.message });
   }
@@ -31,7 +35,9 @@ const addProduct = async (req, res) => {
     const result = await models.electronics.create(product);
 
     if (!result) {
-      return res.status(404).json({ success: false, message: "No document found..." });
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
     }
 
     return res.status(200).json({ result, success: true });
@@ -46,7 +52,9 @@ const deletePdt = async (req, res) => {
     const result = await models.electronics.deleteOne({ _id: req.params.id });
 
     if (!result) {
-      return res.status(404).json({ success: false, message: "No document found..." });
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
     }
 
     return res.status(200).json({ result, success: true });
@@ -69,7 +77,9 @@ const updateProduct = async (req, res) => {
     );
 
     if (!result) {
-      return res.status(404).json({ success: false, message: "No document found..." });
+      return res
+        .status(404)
+        .json({ success: false, message: "No document found..." });
     }
 
     return res.status(200).json({ result, success: true });
